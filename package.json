@@ -1,0 +1,12 @@
+{
+  "name": "h5-cleaner",
+  "version": "1.0.0",
+  "description": "去版权、去广告、去尾页工具",
+  "main": "api/index.js",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.4.0",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5"
+  }
+}
