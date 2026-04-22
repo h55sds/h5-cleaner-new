@@ -12,26 +12,28 @@ function cleanHtml(html, options = { removeAds: true, removeCopyright: true, rem
     const $ = cheerio.load(html);
     
     if (options.removeAds) {
-        // 移除常见广告元素
         $('.ad, .ads, .advertisement, [id*=ad], [class*=ad], [id*=google_ads], .banner-ad, [class*=banner]').remove();
     }
     
     if (options.removeCopyright) {
-        // 移除版权相关元素
         $('[class*=copyright], [id*=copyright], [class*=copy-right], footer:contains("版权所有"), div:contains("ICP备"), [class*=license]').remove();
     }
     
     if (options.removeFooter) {
-        // 移除尾部导航、页脚
         $('footer, .footer, [class*=footer], [id*=footer], .bottom-nav, .page-footer, [class*=bottom]').remove();
     }
     
     return $.html();
 }
 
-// API 接口
+// API 接口 - 只返回 JSON
 app.post('/api/clean', async (req, res) => {
     const { url, removeAds, removeCopyright, removeFooter } = req.body;
+    
+    // 只允许 JSON 请求
+    if (!req.headers.accept || !req.headers.accept.includes('application/json')) {
+        res.setHeader('Content-Type', 'application/json');
+    }
     
     if (!url) {
         return res.status(400).json({ error: 'URL不能为空' });
@@ -47,17 +49,21 @@ app.post('/api/clean', async (req, res) => {
         
         const cleanedHtml = cleanHtml(response.data, { removeAds, removeCopyright, removeFooter });
         
-        // 如果请求要求返回HTML，直接返回HTML
-if (req.headers.accept && req.headers.accept.includes('text/html')) {
-    res.setHeader('Content-Type', 'text/html');
-    res.send(cleanedHtml);
-} else {
-    res.json({
-        success: true,
-        originalUrl: url,
-        cleanedHtml: cleanedHtml,
-        title: cheerio.load(response.data)('title').text() || '无标题'
-    });
-}
+        // 始终返回 JSON
+        res.json({
+            success: true,
+            originalUrl: url,
+            cleanedHtml: cleanedHtml,
+            title: cheerio.load(response.data)('title').text() || '无标题'
+        });
+    } catch (error) {
+        res.status(500).json({ error: '获取网页失败：' + error.message });
+    }
+});
+
+// 健康检查接口（可选）
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
+});
 
 module.exports = app;
