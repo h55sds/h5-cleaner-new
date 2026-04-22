@@ -47,15 +47,17 @@ app.post('/api/clean', async (req, res) => {
         
         const cleanedHtml = cleanHtml(response.data, { removeAds, removeCopyright, removeFooter });
         
-        res.json({
-            success: true,
-            originalUrl: url,
-            cleanedHtml: cleanedHtml,
-            title: cheerio.load(response.data)('title').text() || '无标题'
-        });
-    } catch (error) {
-        res.status(500).json({ error: '获取网页失败：' + error.message });
-    }
-});
+        // 如果请求要求返回HTML，直接返回HTML
+if (req.headers.accept && req.headers.accept.includes('text/html')) {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(cleanedHtml);
+} else {
+    res.json({
+        success: true,
+        originalUrl: url,
+        cleanedHtml: cleanedHtml,
+        title: cheerio.load(response.data)('title').text() || '无标题'
+    });
+}
 
 module.exports = app;
